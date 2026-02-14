@@ -1,6 +1,6 @@
 # keycloak_java
 
-Entorno local de Keycloak con PostgreSQL usando Docker Compose.
+Entorno local de Keycloak con PostgreSQL y LDAP usando Docker Compose.
 
 ## Requisitos
 
@@ -15,7 +15,7 @@ Entorno local de Keycloak con PostgreSQL usando Docker Compose.
 docker compose up -d
 ```
 
-Primera ejecución: descargará imágenes (`postgres:16` y `quay.io/keycloak/keycloak:latest`), puede tardar varios minutos.
+Primera ejecución: descargará imágenes (`postgres:16`, `quay.io/keycloak/keycloak:latest`, `osixia/openldap:1.5.0` y `osixia/phpldapadmin:0.9.0`), puede tardar varios minutos.
 
 ### 2. Validar estado de contenedores
 
@@ -27,7 +27,10 @@ Resultado esperado:
 
 - `keycloak-postgres` en estado `Up ... (healthy)`
 - `keycloak` en estado `Up`
+- `keycloak-ldap` en estado `Up`
+- `keycloak-ldapadmin` en estado `Up`
 - Puerto publicado `0.0.0.0:8080->8080/tcp`
+- Puerto publicado `0.0.0.0:8081->80/tcp` (phpLDAPadmin)
 
 ### 3. Validar arranque en logs
 
@@ -49,11 +52,25 @@ Debe aparecer:
 
 - `database system is ready to accept connections`
 
+Opcionalmente, revisar LDAP:
+
+```bash
+docker compose logs --tail=80 ldap
+```
+
+Debe aparecer:
+
+- `slapd starting`
+
 ### 4. Acceso a la consola
 
 - URL: `http://localhost:8080`
 - Usuario admin: `admin`
 - Password admin: `admin`
+- phpLDAPadmin: `http://localhost:8081`
+- LDAP base DN: `dc=example,dc=org`
+- LDAP admin DN: `cn=admin,dc=example,dc=org`
+- LDAP admin password: `admin`
 
 Nota: en algunos entornos la URL puede tardar unos segundos extra en responder aunque el contenedor ya esté `Up`.
 
@@ -69,7 +86,7 @@ docker compose down
 docker compose down && docker compose up -d
 ```
 
-## Limpiar volúmenes (borra datos de Postgres)
+## Limpiar volúmenes (borra datos de Postgres y LDAP)
 
 ```bash
 docker compose down -v
@@ -83,3 +100,6 @@ docker compose down -v
 - Si no abre `http://localhost:8080`:
   - comprobar que Docker Desktop está iniciado
   - validar que el puerto `8080` no está ocupado por otro servicio
+- Si no abre `http://localhost:8081`:
+  - validar que el puerto `8081` no está ocupado
+  - revisar `docker compose logs ldapadmin`
